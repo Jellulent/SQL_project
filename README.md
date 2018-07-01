@@ -70,3 +70,33 @@ SELECT price,
   model_name
 FROM q_p
 GROUP BY price;
+
+WITH q_p AS (
+	SELECT *
+	FROM purchase AS 'p'
+	LEFT JOIN quiz AS 'q'
+		ON q.user_id = p.user_id)
+	
+SELECT model_name,
+	COUNT (DISTINCT user_id),
+  style
+FROM q_p
+GROUP BY model_name;
+
+WITH funnel AS (
+  SELECT DISTINCT q.user_id,
+     h.user_id IS NOT NULL AS 'is_checkout',
+     p.user_id IS NOT NULL AS 'is_purchase'
+  FROM quiz AS 'q'
+  LEFT JOIN home_try_on AS 'h'
+    ON h.user_id = q.user_id
+  LEFT JOIN purchase AS 'p'
+    ON p.user_id = h.user_id)
+SELECT COUNT (*) AS 'num_quiz',
+SUM (is_checkout) AS 'num_hto',
+SUM (is_purchase) AS 'num_purchase',
+	1.0 * SUM (is_checkout)/
+	COUNT(user_id),
+  1.0 * SUM (is_purchase) /
+  SUM (is_checkout)
+FROM funnel;
